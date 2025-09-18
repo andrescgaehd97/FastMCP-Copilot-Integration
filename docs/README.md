@@ -1,177 +1,167 @@
-# Soccer API - Azure Deployment
 
-Esta aplicación es un servidor MCP (Model Context Protocol) que proporciona datos de fútbol en tiempo real utilizando FastMCP y una API externa de deportes.
+# Soccer API - Azure Deployment with GitHub Copilot Integration
 
-## Arquitectura
+This application is an MCP (Model Context Protocol) server that provides real-time football data using FastMCP and the [API-FOOTBALL](https://www.api-football.com/) external sports API. The project is designed for seamless integration with GitHub Copilot, enabling AI-powered code suggestions and automation throughout development and deployment.
 
-- **Azure Container Registry (ACR)**: Para almacenar la imagen Docker
-- **Azure App Service (Web App for Containers)**: Para hospedar la aplicación
-- **Docker**: Para containerización
-- **Bicep**: Para Infrastructure as Code (IaC)
+## Project Structure
 
-## Prerrequisitos
+```
+├── src/                          # Application source code
+│   ├── __init__.py
+│   ├── main.py                   # Main MCP server
+│   └── api.py                    # API client for sports data
+├── infrastructure/               # Infrastructure as Code (IaC)
+│   ├── main.bicep                # Bicep template for Azure resources
+│   └── main.parameters.json      # Deployment parameters
+├── scripts/                      # Automation scripts
+│   ├── deploy.bat                # Windows Batch deployment script
+│   └── deploy.ps1                # PowerShell deployment script
+├── docs/                         # Documentation
+│   └── README.md                 # Detailed documentation
+├── app.py                        # Main entry point
+├── requirements.txt              # Python dependencies
+├── Dockerfile                    # Docker configuration
+└── README.md                     # This file
+```
 
-1. **Azure CLI** instalado y configurado
-2. **Docker** instalado
-3. **Cuenta de Azure** con permisos para crear recursos
-4. **API Key** para la API de deportes (RapidAPI)
+## Integration with GitHub Copilot
 
-## Configuración
+- **Copilot Usage:** The project is structured to maximize GitHub Copilot's capabilities for code completion, refactoring, and deployment automation.
+- **Configuration Guidance:** Copilot can assist in editing configuration files, writing deployment scripts, and generating infrastructure code.
+- **API Integration:** Copilot helps streamline the integration with the API-FOOTBALL service, including authentication and endpoint management.
 
-### 1. Configurar credenciales de API
+## API Configuration
 
-Edita el archivo `main.parameters.json` y actualiza los siguientes valores:
+The application uses the [API-FOOTBALL](https://www.api-football.com/) service for sports data. To configure the API:
+
+1. **Edit Credentials:**
+   Update `infrastructure/main.parameters.json` with your API key and base URL:
+   ```json
+   {
+     "apiKey": {
+       "value": "YOUR_API_KEY_HERE"
+     },
+     "baseUrl": {
+       "value": "https://api-football-v1.p.rapidapi.com/v3"
+     },
+     "apiVersion": {
+       "value": "api-football-v1.p.rapidapi.com"
+     }
+   }
+   ```
+
+2. **Environment Variables:**
+   Set the following environment variables for local development or deployment:
+   - `API_KEY`: Your API-FOOTBALL key
+   - `BASE_URL`: `https://api-football-v1.p.rapidapi.com/v3`
+   - `API_VERSION`: `api-football-v1.p.rapidapi.com`
+
+## Azure Deployment (Docker & AKS)
+
+### Automated Deployment
+
+- **Batch Script (Windows):**
+  ```batch
+  cd scripts
+  deploy.bat
+  ```
+
+- **PowerShell Script:**
+  ```powershell
+  cd scripts
+  .\deploy.ps1
+  ```
+
+### Manual Deployment Steps
+
+1. **Login to Azure:**
+   ```
+   az login
+   ```
+
+2. **Create Resource Group:**
+   ```
+   az group create --name rg-soccerapi-dev --location "East US"
+   ```
+
+3. **Deploy Infrastructure:**
+   ```
+   az deployment group create --resource-group rg-soccerapi-dev --template-file infrastructure/main.bicep --parameters infrastructure/main.parameters.json
+   ```
+
+4. **Build and Push Docker Image:**
+   ```
+   docker build -t <ACR_LOGIN_SERVER>/soccerapi-api:latest .
+   docker push <ACR_LOGIN_SERVER>/soccerapi-api:latest
+   ```
+
+5. **Restart Web App:**
+   ```
+   az webapp restart --resource-group rg-soccerapi-dev --name soccerapi-webapp
+   ```
+
+### Deploying with AKS (Azure Kubernetes Service)
+
+- You can adapt the Bicep template and deployment scripts to provision AKS clusters and deploy the containerized application for scalable, managed orchestration.
+
+## Endpoints
+
+After deployment, the application will be available at `https://{app-name}-webapp.azurewebsites.net` with endpoints such as:
+- `/health` — Health check endpoint
+- MCP endpoints for sports data (see FastMCP implementation)
+
+## Security Features
+
+- Non-root user in Docker container
+- Sensitive credentials managed via environment variables
+- HTTPS enforced in Azure App Service
+- Health check endpoint
+- Production-ready Python optimizations
+
+## Monitoring & Logs
+
+- View logs:
+  ```
+  az webapp log tail --resource-group rg-soccerapi-dev --name soccerapi-webapp
+  ```
+- Access logs via Azure Portal: Go to App Service > "Log stream"
+
+## Resource Cleanup
+
+To delete all resources:
+```
+az group delete --name rg-soccerapi-dev --yes --no-wait
+```
+
+
+## MCP Server Configuration for Copilot
+
+To enable Copilot to interact with your MCP server, configure the `.vscode/mcp.json` file in your project root. This file defines the MCP server endpoint for Copilot:
 
 ```json
 {
-  "apiKey": {
-    "value": "TU_API_KEY_AQUI"
-  },
-  "baseUrl": {
-    "value": "https://api-football-v1.p.rapidapi.com/v3"
-  },
-  "apiVersion": {
-    "value": "api-football-v1.p.rapidapi.com"
+  "servers": {
+    "sports-mcp": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp/"
+    }
   }
 }
 ```
 
-### 2. Personalizar configuración (opcional)
+**Instructions:**
+- Place this file at `.vscode/mcp.json`.
+- For local development, use `http://127.0.0.1:8000/mcp/` as the URL.
+- For production, update the URL to your deployed server (e.g., Azure Web App or AKS endpoint).
 
-En `main.parameters.json` puedes modificar:
-- `appName`: Nombre de la aplicación (por defecto: "soccerapi")
-- `location`: Región de Azure (por defecto: "East US")
-- `appServicePlanSku`: SKU del App Service Plan (por defecto: "B1")
+This setup allows GitHub Copilot to send requests to your MCP server, enabling AI-powered features and real-time football data integration in your development workflow.
 
-## Despliegue
+## Estimated Costs
 
-### Opción 1: Script Batch (Windows)
+- **App Service Plan B1:** ~$13.14/month
+- **Azure Container Registry (Basic):** ~$5/month
+- **Total:** ~$18-20/month
 
-```batch
-deploy.bat
-```
+---
 
-### Opción 2: Script PowerShell
-
-```powershell
-.\deploy.ps1
-```
-
-### Opción 3: Manual
-
-1. **Login a Azure**:
-   ```bash
-   az login
-   ```
-
-2. **Crear grupo de recursos**:
-   ```bash
-   az group create --name rg-soccerapi-dev --location "East US"
-   ```
-
-3. **Desplegar infraestructura**:
-   ```bash
-   az deployment group create \
-     --resource-group rg-soccerapi-dev \
-     --template-file main.bicep \
-     --parameters main.parameters.json
-   ```
-
-4. **Obtener información del ACR**:
-   ```bash
-   ACR_NAME=$(az deployment group show --resource-group rg-soccerapi-dev --name main --query properties.outputs.acrName.value -o tsv)
-   ACR_LOGIN_SERVER=$(az deployment group show --resource-group rg-soccerapi-dev --name main --query properties.outputs.acrLoginServer.value -o tsv)
-   ```
-
-5. **Login al ACR**:
-   ```bash
-   az acr login --name $ACR_NAME
-   ```
-
-6. **Build y push de la imagen**:
-   ```bash
-   docker build -t $ACR_LOGIN_SERVER/soccerapi-api:latest .
-   docker push $ACR_LOGIN_SERVER/soccerapi-api:latest
-   ```
-
-7. **Reiniciar la web app**:
-   ```bash
-   az webapp restart --resource-group rg-soccerapi-dev --name soccerapi-webapp
-   ```
-
-## Estructura de archivos
-
-```
-├── main.py                    # Aplicación principal con servidor MCP
-├── api.py                     # Cliente API para datos deportivos
-├── requirements.txt           # Dependencias Python
-├── Dockerfile                # Configuración Docker optimizada para producción
-├── main.bicep                # Template Bicep para infraestructura Azure
-├── main.parameters.json      # Parámetros para el deployment
-├── deploy.bat                # Script de despliegue (Batch)
-├── deploy.ps1                # Script de despliegue (PowerShell)
-└── README.md                 # Este archivo
-```
-
-## Endpoints disponibles
-
-Después del despliegue, la aplicación estará disponible en `https://{app-name}-webapp.azurewebsites.net` con los siguientes endpoints:
-
-- `/health` - Health check endpoint
-- Endpoints MCP para datos deportivos (según la implementación de FastMCP)
-
-## Características de seguridad implementadas
-
-1. **Usuario no-root** en el contenedor Docker
-2. **Variables de entorno** para credenciales sensibles
-3. **HTTPS obligatorio** en Azure App Service
-4. **Health check** configurado
-5. **Optimizaciones Python** para producción
-
-## Monitoreo y logs
-
-Para ver los logs de la aplicación:
-
-```bash
-az webapp log tail --resource-group rg-soccerapi-dev --name soccerapi-webapp
-```
-
-Para acceder a los logs en Azure Portal:
-1. Ve al App Service en Azure Portal
-2. Selecciona "Log stream" en el menú lateral
-
-## Troubleshooting
-
-### La aplicación no inicia
-- Verifica que las variables de entorno API_KEY, BASE_URL, y API_VERSION estén configuradas
-- Revisa los logs de la aplicación
-
-### Error de autenticación con ACR
-- Asegúrate de estar logueado: `az acr login --name {acr-name}`
-- Verifica que el ACR tenga habilitado el admin user
-
-### Problemas con Docker
-- Asegúrate de que Docker esté ejecutándose
-- Verifica que puedas hacer pull/push a otros registros
-
-## Limpieza de recursos
-
-Para eliminar todos los recursos creados:
-
-```bash
-az group delete --name rg-soccerapi-dev --yes --no-wait
-```
-
-## Costos estimados
-
-Con la configuración por defecto (App Service Plan B1):
-- **App Service Plan B1**: ~$13.14/mes
-- **Azure Container Registry (Basic)**: ~$5/mes
-- **Total aproximado**: ~$18-20/mes
-
-## Notas adicionales
-
-- La aplicación usa el puerto 8000 internamente
-- Azure App Service maneja automáticamente el puerto externo (80/443)
-- El health check está configurado para ejecutarse cada 30 segundos
-- Las credenciales del ACR se manejan automáticamente por Azure
+This README is optimized for GitHub Copilot workflows and Azure cloud deployment. For more details, see `docs/README.md`.
