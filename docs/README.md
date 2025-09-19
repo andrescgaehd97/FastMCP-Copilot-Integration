@@ -164,4 +164,8 @@ This setup allows GitHub Copilot to send requests to your MCP server, enabling A
 
 ---
 
+## Demo
+
+![Github Integration](../public/MCP-Integration-Result.png)
+
 This README is optimized for GitHub Copilot workflows and Azure cloud deployment. For more details, see `docs/README.md`.
